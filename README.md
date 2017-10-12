@@ -1,44 +1,44 @@
-# ʹ��MFC��CDC�������ά����ϵ�����溯��
+# 使用MFC的CDC类绘制三维坐标系及球面函数
 
-## ϵ������
+## 系列链接
 
-* [ʹ��MFC��CDC����ƶ�ά����ϵ�������Һ���]() / [Դ��]()
+* [使用MFC的CDC类绘制二维坐标系及正余弦函数](https://blog.huihut.com/2017/10/13/GraphicsExercise2D/) / [源码](https://github.com/huihut/GraphicsExercise2D)
 
-* [ʹ��MFC��CDC�������ά����ϵ�����溯��]() / [Դ��]()
+* [使用MFC的CDC类绘制三维坐标系及球面函数](https://blog.huihut.com/2017/10/13/GraphicsExercise3D/) / [源码](https://github.com/huihut/GraphicsExercise3D)
 
-## ����
+## 概述
 
-����ʹ��MFC��CDC�������ά����ϵ�����溯�������ȼ����Ƶ�����ά�����ڶ�άƽ����ʾ������任���̣�ʹ��б������ͼ����ʹ������Ĳ������̣�Ȼ����ͼ�����ű�����ģ��������λ�ƣ��任����ϵ�͹�ģ�ȣ������������ἰ���溯����
+本文使用MFC的CDC类绘制三维坐标系及球面函数。首先计算推导出三维坐标在二维平面显示的坐标变换方程（使用斜二测视图），使用球面的参数方程，然后定义图形缩放比例规模、坐标轴位移，变换坐标系和规模等，最后绘制坐标轴及球面函数。
 
-����Ի��ƶ�ά����ϵ����̫��Ϥ�����ȿ�����ϵ�����ӵģ�[ʹ��MFC��CDC����ƶ�ά����ϵ�������Һ���]()�����ĶԶ�ά���Ƽ����ƺ������ֲ���׸������Ϊ��ά����ϵ�Ĳ����Ѿ���ģ�齲��رȽ�����ˣ�������ά����ϵ�Ļ���˼·��ͬ�����Ա��Ĵ󲿷�ֱ��ʹ��ע�ͽ��⡣
+如果对绘制二维坐标系还不太熟悉可以先看上面系列链接的：[使用MFC的CDC类绘制二维坐标系及正余弦函数](https://blog.huihut.com/2017/10/13/GraphicsExercise2D/)，本文对二维绘制及绘制函数部分不再赘述。因为二维坐标系的博文已经分模块讲解地比较清楚了，而与三维坐标系的基本思路相同，所以本文大部分直接使用注释讲解。
 
-## ��άת��ά���Ƶ�
+## 三维转二维的推导
 
 ![Transform3Dto2D](http://ojlsgreog.bkt.clouddn.com/Transform3Dto2D.png)
 
-��ͼ��֪��ֻҪʹ��`Transform3Dto2D()`���������ɷ���İ���ά����ת��Ϊ��ά���꣨б������ͼ����
+上图可知，只要使用`Transform3Dto2D()`函数，即可方便的把三维坐标转化为二维坐标（斜二测视图）。
 
-## �����������
+## 球面参数方程
 
-����ά�ռ�ֱ������ϵ�У���ԭ��Ϊ���ġ��뾶Ϊ `r` ������ķ���Ϊ `x^2 + y^2 + z^2 = r^2`�����������Ϊ
+在三维空间直角坐标系中，以原点为球心、半径为 `r` 的球面的方程为 `x^2 + y^2 + z^2 = r^2`，其参数方程为
 
 ![SphericalParameterEquation](http://ojlsgreog.bkt.clouddn.com/SphericalParameterEquation.png)
 
-## �½���Ŀ
+## 新建项目
 
-`Visual Studio`- `�½���Ŀ` - `MFCӦ�ó���` - ����Ϊ`GraphicsExercise3D` - `ȷ��` - `��һ��` - Ӧ�ó�������ѡ��`�����ĵ�` - `���`
+`Visual Studio`- `新建项目` - `MFC应用程序` - 命名为`GraphicsExercise3D` - `确定` - `下一步` - 应用程序类型选择`单个文档` - `完成`
 
 ## GraphicsExerciseView.h
 
-��`GraphicsExerciseView.h`������������
+在`GraphicsExerciseView.h`添加以下内容
 
 ```
-// ����
+// 操作
 public:
 	void SetScale(int scale);
 	void SetTransformOrigin(float transformOriginX, float transformOriginY);
 	void SetPlotSphere(float radius, float stepPhi, float stepTheta);
-  void SetSlantRadian(float slant);
+  	void SetSlantRadian(float slant);
 
 	float TransformScale(float num);
 	float TransformOriginX(float x);
@@ -54,56 +54,56 @@ private:
 
 ## GraphicsExerciseView.cpp
 
-������ѧ������
+引入数学函数库
 ```
 #include <math.h>
 ```
 
-�����
+定义π
 ```
 #ifndef PI
 #define PI 3.14159
 #endif // !PI
 ```
 
-�ڹ��캯����ʼ��
+在构造函数初始化
 
 ```
 CGraphicsExercise3DView::CGraphicsExercise3DView()
 {
-	// TODO: �ڴ˴����ӹ������
+	// TODO: 在此处添加构造代码
 
-	// ����б������ͼ��б�Ƕȣ������ƣ�
+	// 设置斜二测视图倾斜角度（弧度制）
 	SetSlantRadian(PI / 4);
 
-	// ���ù�ģ����
+	// 设置规模比例
 	SetScale(70);
 
-	// ��������ϵ��x��y�����λ�ƣ����ı��ģ����£����ƶ����أ�
+	// 设置坐标系在x、y方向的位移（不改变规模情况下，即移动像素）
 	SetTransformOrigin(300, 350);
 
-	// ��������뾶radius��ȡ������stepPhi��stepTheta
+	// 设置球面半径radius、取样步长stepPhi、stepTheta
 	SetPlotSphere(2.0, 0.01, 0.1);
 }
 ```
 
-���ó�ʼ��������Set����
+设置初始化参数的Set函数
 
 ```
-// ���ù�ģ
+// 设置规模
 void CGraphicsExercise3DView::SetScale(int scale)
 {
 	this->scale = scale;
 }
 
-// ��������ϵԭ����x��y�����λ�ƣ����ı��ģ����£����ƶ����أ�
+// 设置坐标系原点在x、y方向的位移（不改变规模情况下，即移动像素）
 void CGraphicsExercise3DView::SetTransformOrigin(float transformOriginX, float transformOriginY)
 {
 	this->transformOriginX = transformOriginX;
 	this->transformOriginY = transformOriginY;
 }
 
-// ��������뾶radius��ȡ������stepPhi��stepTheta
+// 设置球面半径radius、取样步长stepPhi、stepTheta
 void CGraphicsExercise3DView::SetPlotSphere(float radius, float stepPhi, float stepTheta)
 {
 	this->radius = radius;
@@ -111,51 +111,51 @@ void CGraphicsExercise3DView::SetPlotSphere(float radius, float stepPhi, float s
 	this->stepTheta = stepTheta;
 }
 
-// ����б������ͼ����б�ǣ���λ���ȣ�
+// 设置斜二测视图的倾斜角（单位弧度）
 void CGraphicsExercise3DView::SetSlantRadian(float slant)
 {
 	this->slant = slant;
 }
 ```
 
-���꼰��ģ�任
+坐标及规模变换
 
 ```
-// �任��ģ
+// 变换规模
 float CGraphicsExercise3DView::TransformScale(float num)
 {
 	return num * scale;
 }
 
-// ����ϵX�᷽��λ��
+// 坐标系X轴方向位移
 float CGraphicsExercise3DView::TransformOriginX(float x)
 {
 	return x + transformOriginX / scale;
 }
 
-// ����ϵy�᷽��λ��
+// 坐标系y轴方向位移
 float CGraphicsExercise3DView::TransformOriginY(float y)
 {
 	return y - transformOriginY / scale;
 }
 
-// �任����ϵX�͹�ģ
+// 变换坐标系X和规模
 float CGraphicsExercise3DView::TransformOriginScaleX(float x)
 {
 	return TransformScale(TransformOriginX(x));
 }
 
-// �任����ϵY�͹�ģ
+// 变换坐标系Y和规模
 float CGraphicsExercise3DView::TransformOriginScaleY(float y)
 {
 	return -TransformScale(TransformOriginY(y));
 }
 ```
 
-��ά����ת��Ϊ��ά����
+三维坐标转化为二维坐标
 
 ```
-// ʹ��б������ͼ������ά�����ת��Ϊ��άƽ���ϵĵ�
+// 使用斜二测视图，把三维坐标点转化为二维平面上的点
 void CGraphicsExercise3DView::Transform3Dto2D(float &x, float &y, float z)
 {
 	x = x - (z * cos(slant)) / 2;
@@ -163,10 +163,10 @@ void CGraphicsExercise3DView::Transform3Dto2D(float &x, float &y, float z)
 }
 ```
 
-���������ἰ����ͼ��
+绘制坐标轴及函数图形
 
 ```
-// CGraphicsExercise2View ����
+// CGraphicsExercise2View 绘制
 
 void CGraphicsExercise3DView::OnDraw(CDC* pDC)
 {
@@ -175,37 +175,37 @@ void CGraphicsExercise3DView::OnDraw(CDC* pDC)
 	if (!pDoc)
 		return;
 
-	// TODO: �ڴ˴�Ϊ�����������ӻ��ƴ���
+	// TODO: 在此处为本机数据添加绘制代码
 
 	float x, y, z;
 
-	// -------------------- ��������ϵ -------------------------
+	// -------------------- 绘制坐标系 -------------------------
 
-	// ����x��
+	// 坐标x轴
 	pDC->MoveTo(TransformOriginScaleX(0), TransformOriginScaleY(0));
 	pDC->LineTo(TransformOriginScaleX(radius + 2), TransformOriginScaleY(0));
 
-	// ����y��
+	// 坐标y轴
 	pDC->MoveTo(TransformOriginScaleX(0), TransformOriginScaleY(0));
 	pDC->LineTo(TransformOriginScaleX(0), TransformOriginScaleY(radius + 2));
 
-	// ����z��
+	// 坐标z轴
 	x = 0, y = 0;
 	Transform3Dto2D(x, y, radius + 5);
 	pDC->MoveTo(TransformOriginScaleX(0), TransformOriginScaleY(0));
 	pDC->LineTo(TransformOriginScaleX(x), TransformOriginScaleY(y));
 
-	// ����x��ļ�ͷ
+	// 坐标x轴的箭头
 	pDC->MoveTo(TransformOriginScaleX(radius + 1.8), TransformOriginScaleY(0.2));
 	pDC->LineTo(TransformOriginScaleX(radius + 2), TransformOriginScaleY(0));
 	pDC->LineTo(TransformOriginScaleX(radius + 1.8), TransformOriginScaleY(-0.2));
 
-	// ����y��ļ�ͷ
+	// 坐标y轴的箭头
 	pDC->MoveTo(TransformOriginScaleX(-0.2), TransformOriginScaleY(radius + 1.8));
 	pDC->LineTo(TransformOriginScaleX(0), TransformOriginScaleY(radius + 2));
 	pDC->LineTo(TransformOriginScaleX(0.2), TransformOriginScaleY(radius + 1.8));
 
-	// ����z��ļ�ͷ
+	// 坐标z轴的箭头
 	x = 0, y = 0.2;
 	Transform3Dto2D(x, y, radius + 5 - 0.2);
 	pDC->MoveTo(TransformOriginScaleX(x), TransformOriginScaleY(y));
@@ -216,23 +216,23 @@ void CGraphicsExercise3DView::OnDraw(CDC* pDC)
 	Transform3Dto2D(x, y, radius + 5 - 0.2);
 	pDC->LineTo(TransformOriginScaleX(x), TransformOriginScaleY(y));
 
-	// -------------------- ���ƿ̶��� -------------------------
+	// -------------------- 绘制刻度线 -------------------------
 
-	// ����x��̶���
+	// 绘制x轴刻度线
 	for (float scaleX = 0.2; scaleX < radius + 1; scaleX += 0.2)
 	{
 		pDC->MoveTo((int)TransformOriginScaleX(scaleX), (int)TransformOriginScaleY(0));
 		pDC->LineTo((int)TransformOriginScaleX(scaleX), (int)TransformOriginScaleY(0.1));
 	}
 
-	// ����y��̶���
+	// 绘制y轴刻度线
 	for (float scaleY = 0.2; scaleY <= radius + 1; scaleY += 0.2)
 	{
 		pDC->MoveTo((int)TransformOriginScaleX(0), (int)TransformOriginScaleY(scaleY));
 		pDC->LineTo((int)TransformOriginScaleX(0.1), (int)TransformOriginScaleY(scaleY));
 	}
 
-	// ����z��̶���
+	// 绘制z轴刻度线
 	for (float x = 0, y = 0, scaleZ = 0.2; scaleZ <= radius + 4; scaleZ += 0.2, x = 0, y = 0)
 	{
 		Transform3Dto2D(x, y, scaleZ);
@@ -241,33 +241,33 @@ void CGraphicsExercise3DView::OnDraw(CDC* pDC)
 	}
 
 
-	// -------------------- �������� -------------------------
+	// -------------------- 绘制文字 -------------------------
 
-	// ����x���x
+	// 绘制x轴的x
 	pDC->TextOutW(TransformOriginScaleX(radius + 1.6), TransformOriginScaleY(-0.2), CString("x"));
-	// ����y���y
+	// 绘制y轴的y
 	pDC->TextOutW(TransformOriginScaleX(-0.2), TransformOriginScaleY(radius + 1.6), CString("y"));
-	// ����z���z
+	// 绘制z轴的z
 	x = 0.2, y = 0;
 	Transform3Dto2D(x, y, radius + 5 - 0.4);
 	pDC->TextOutW(TransformOriginScaleX(x), TransformOriginScaleY(y), CString("z"));
 
 	CString s;
-	// ����x��̶�����
+	// 绘制x轴刻度文字
 	for (float ScaleTextX = 0.4; ScaleTextX < radius + 1; ScaleTextX += 0.4)
 	{
 		s.Format(_T("%.1f"), ScaleTextX);
 		pDC->TextOutW(TransformOriginScaleX(ScaleTextX - 0.1), TransformOriginScaleY(-0.1), s);
 	}
 
-	// ����y��̶�����
+	// 绘制y轴刻度文字
 	for (float ScaleTextY = 0.4; ScaleTextY <= radius + 1; ScaleTextY += 0.4)
 	{
 		s.Format(_T("%.1f"), ScaleTextY);
 		pDC->TextOutW(TransformOriginScaleX(-0.4), TransformOriginScaleY(ScaleTextY + 0.1), s);
 	}
 
-	// ����z��̶�����
+	// 绘制z轴刻度文字
 	for (float ScaleTextZ = 0.6; ScaleTextZ <= radius + 4; ScaleTextZ += 0.6)
 	{
 		s.Format(_T("%.1f"), ScaleTextZ);
@@ -276,14 +276,14 @@ void CGraphicsExercise3DView::OnDraw(CDC* pDC)
 		pDC->TextOutW(TransformOriginScaleX(x + 0.15), TransformOriginScaleY(y + 0.12), s);
 	}
 
-	// ���ƺ���ͼ��Title
+	// 绘制函数图的Title
 	x = 0, y = 0;
 	Transform3Dto2D(x, y, radius + 5);
 	pDC->TextOutW(TransformOriginScaleX(x + 3), TransformOriginScaleY(y), CString("x^2 + y^2 + z^2 = r^2"));
 
-	// -------------------- ���ƺ��� -------------------------
+	// -------------------- 绘制函数 -------------------------
 
-	// ����
+	// 球面
 	float phi, theta;
 	for (phi = 0; phi < 2 * PI; phi += stepPhi)
 	{
@@ -301,7 +301,7 @@ void CGraphicsExercise3DView::OnDraw(CDC* pDC)
 	}
 
 
-	//// ����׶�������ã�
+	//// 三棱锥（测试用）
 	//x = 1, y = 0, z = 0;
 	//Transform3Dto2D(x, y, z);
 	//pDC->MoveTo((int)TransformOriginScaleX(x), (int)TransformOriginScaleY(y));
@@ -321,6 +321,6 @@ void CGraphicsExercise3DView::OnDraw(CDC* pDC)
 }
 ```
 
-## Ч��ͼ
+## 效果图
 
 ![GraphicsExercise3DCapture](http://ojlsgreog.bkt.clouddn.com/GraphicsExercise3DCapture.png)
