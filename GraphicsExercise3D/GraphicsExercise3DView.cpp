@@ -1,79 +1,47 @@
-# 使用MFC的CDC类绘制三维坐标系及球面函数
 
-## 系列链接
+// GraphicsExercise3DView.cpp : CGraphicsExercise3DView 类的实现
+//
 
-* [使用MFC的CDC类绘制二维坐标系及正余弦函数]() / [源码]()
+#include "stdafx.h"
+// SHARED_HANDLERS 可以在实现预览、缩略图和搜索筛选器句柄的
+// ATL 项目中进行定义，并允许与该项目共享文档代码。
+#ifndef SHARED_HANDLERS
+#include "GraphicsExercise3D.h"
+#endif
 
-* [使用MFC的CDC类绘制三维坐标系及球面函数]() / [源码]()
+#include "GraphicsExercise3DDoc.h"
+#include "GraphicsExercise3DView.h"
 
-## 概述
-
-本文使用MFC的CDC类绘制三维坐标系及球面函数。首先计算推导出三维坐标在二维平面显示的坐标变换方程（使用斜二测视图），使用球面的参数方程，然后定义图形缩放比例规模、坐标轴位移，变换坐标系和规模等，最后绘制坐标轴及球面函数。
-
-如果对绘制二维坐标系还不太熟悉可以先看上面系列链接的：[使用MFC的CDC类绘制二维坐标系及正余弦函数]()，本文对二维绘制及绘制函数部分不再赘述。因为二维坐标系的博文已经分模块讲解地比较清楚了，而与三维坐标系的基本思路相同，所以本文大部分直接使用注释讲解。
-
-## 三维转二维的推导
-
-![Transform3Dto2D](http://ojlsgreog.bkt.clouddn.com/Transform3Dto2D.png)
-
-上图可知，只要使用`Transform3Dto2D()`函数，即可方便的把三维坐标转化为二维坐标（斜二测视图）。
-
-## 球面参数方程
-
-在三维空间直角坐标系中，以原点为球心、半径为 `r` 的球面的方程为 `x^2 + y^2 + z^2 = r^2`，其参数方程为
-
-![SphericalParameterEquation](http://ojlsgreog.bkt.clouddn.com/SphericalParameterEquation.png)
-
-## 新建项目
-
-`Visual Studio`- `新建项目` - `MFC应用程序` - 命名为`GraphicsExercise3D` - `确定` - `下一步` - 应用程序类型选择`单个文档` - `完成`
-
-## GraphicsExerciseView.h
-
-在`GraphicsExerciseView.h`添加以下内容
-
-```
-// 操作
-public:
-	void SetScale(int scale);
-	void SetTransformOrigin(float transformOriginX, float transformOriginY);
-	void SetPlotSphere(float radius, float stepPhi, float stepTheta);
-  void SetSlantRadian(float slant);
-
-	float TransformScale(float num);
-	float TransformOriginX(float x);
-	float TransformOriginY(float y);
-	float TransformOriginScaleX(float x);
-	float TransformOriginScaleY(float y);
-	void Transform3Dto2D(float &x, float &y, float z);
-
-private:
-    int scale;
-    float radius, stepPhi, stepTheta, slant, transformOriginX, transformOriginY;
-```
-
-## GraphicsExerciseView.cpp
-
-引入数学函数库
-```
 #include <math.h>
-```
 
-定义π
-```
+#ifdef _DEBUG
+#define new DEBUG_NEW
+#endif
+
 #ifndef PI
 #define PI 3.14159
 #endif // !PI
-```
 
-在构造函数初始化
+// CGraphicsExercise3DView
 
-```
+IMPLEMENT_DYNCREATE(CGraphicsExercise3DView, CView)
+
+BEGIN_MESSAGE_MAP(CGraphicsExercise3DView, CView)
+	// 标准打印命令
+	ON_COMMAND(ID_FILE_PRINT, &CView::OnFilePrint)
+	ON_COMMAND(ID_FILE_PRINT_DIRECT, &CView::OnFilePrint)
+	ON_COMMAND(ID_FILE_PRINT_PREVIEW, &CGraphicsExercise3DView::OnFilePrintPreview)
+	ON_WM_CONTEXTMENU()
+	ON_WM_RBUTTONUP()
+END_MESSAGE_MAP()
+
+// CGraphicsExercise3DView 构造/析构
+
 CGraphicsExercise3DView::CGraphicsExercise3DView()
 {
 	// TODO: 在此处添加构造代码
 
-	// 设置斜二测视图倾斜角度（弧度制）
+	// 设置斜二测视图倾斜角度（弧度制） 
 	SetSlantRadian(PI / 4);
 
 	// 设置规模比例
@@ -85,11 +53,20 @@ CGraphicsExercise3DView::CGraphicsExercise3DView()
 	// 设置球面半径radius、取样步长stepPhi、stepTheta
 	SetPlotSphere(2.0, 0.01, 0.1);
 }
-```
 
-设置初始化参数的Set函数
+CGraphicsExercise3DView::~CGraphicsExercise3DView()
+{
+}
 
-```
+BOOL CGraphicsExercise3DView::PreCreateWindow(CREATESTRUCT& cs)
+{
+	// TODO: 在此处通过修改
+	//  CREATESTRUCT cs 来修改窗口类或样式
+
+	return CView::PreCreateWindow(cs);
+}
+
+
 // 设置规模
 void CGraphicsExercise3DView::SetScale(int scale)
 {
@@ -116,11 +93,7 @@ void CGraphicsExercise3DView::SetSlantRadian(float slant)
 {
 	this->slant = slant;
 }
-```
 
-坐标及规模变换
-
-```
 // 变换规模
 float CGraphicsExercise3DView::TransformScale(float num)
 {
@@ -150,22 +123,16 @@ float CGraphicsExercise3DView::TransformOriginScaleY(float y)
 {
 	return -TransformScale(TransformOriginY(y));
 }
-```
 
-三维坐标转化为二维坐标
 
-```
 // 使用斜二测视图，把三维坐标点转化为二维平面上的点
 void CGraphicsExercise3DView::Transform3Dto2D(float &x, float &y, float z)
 {
 	x = x - (z * cos(slant)) / 2;
 	y = y - (z * sin(slant)) / 2;
 }
-```
 
-绘制坐标轴及函数图形
 
-```
 // CGraphicsExercise2View 绘制
 
 void CGraphicsExercise3DView::OnDraw(CDC* pDC)
@@ -319,8 +286,67 @@ void CGraphicsExercise3DView::OnDraw(CDC* pDC)
 	//pDC->LineTo((int)TransformOriginScaleX(x), (int)TransformOriginScaleY(y));
 
 }
-```
 
-## 效果图
 
-![GraphicsExercise3DCapture](http://ojlsgreog.bkt.clouddn.com/GraphicsExercise3DCapture.png)
+// CGraphicsExercise3DView 打印
+
+
+void CGraphicsExercise3DView::OnFilePrintPreview()
+{
+#ifndef SHARED_HANDLERS
+	AFXPrintPreview(this);
+#endif
+}
+
+BOOL CGraphicsExercise3DView::OnPreparePrinting(CPrintInfo* pInfo)
+{
+	// 默认准备
+	return DoPreparePrinting(pInfo);
+}
+
+void CGraphicsExercise3DView::OnBeginPrinting(CDC* /*pDC*/, CPrintInfo* /*pInfo*/)
+{
+	// TODO: 添加额外的打印前进行的初始化过程
+}
+
+void CGraphicsExercise3DView::OnEndPrinting(CDC* /*pDC*/, CPrintInfo* /*pInfo*/)
+{
+	// TODO: 添加打印后进行的清理过程
+}
+
+void CGraphicsExercise3DView::OnRButtonUp(UINT /* nFlags */, CPoint point)
+{
+	ClientToScreen(&point);
+	OnContextMenu(this, point);
+}
+
+void CGraphicsExercise3DView::OnContextMenu(CWnd* /* pWnd */, CPoint point)
+{
+#ifndef SHARED_HANDLERS
+	theApp.GetContextMenuManager()->ShowPopupMenu(IDR_POPUP_EDIT, point.x, point.y, this, TRUE);
+#endif
+}
+
+
+// CGraphicsExercise3DView 诊断
+
+#ifdef _DEBUG
+void CGraphicsExercise3DView::AssertValid() const
+{
+	CView::AssertValid();
+}
+
+void CGraphicsExercise3DView::Dump(CDumpContext& dc) const
+{
+	CView::Dump(dc);
+}
+
+CGraphicsExercise3DDoc* CGraphicsExercise3DView::GetDocument() const // 非调试版本是内联的
+{
+	ASSERT(m_pDocument->IsKindOf(RUNTIME_CLASS(CGraphicsExercise3DDoc)));
+	return (CGraphicsExercise3DDoc*)m_pDocument;
+}
+#endif //_DEBUG
+
+
+// CGraphicsExercise3DView 消息处理程序
