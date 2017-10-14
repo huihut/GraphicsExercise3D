@@ -28,9 +28,9 @@
 
 `Visual Studio`- `新建项目` - `MFC应用程序` - 命名为`GraphicsExercise3D` - `确定` - `下一步` - 应用程序类型选择`单个文档` - `完成`
 
-## GraphicsExerciseView.h
+## GraphicsExercise3DView.h
 
-在`GraphicsExerciseView.h`添加以下内容
+在`GraphicsExercise3DView.h`添加以下内容
 
 ```
 // 操作
@@ -52,7 +52,7 @@ private:
     float radius, stepPhi, stepTheta, slant, transformOriginX, transformOriginY;
 ```
 
-## GraphicsExerciseView.cpp
+## GraphicsExercise3DView.cpp
 
 引入数学函数库
 ```
