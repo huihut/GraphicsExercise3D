@@ -14,7 +14,7 @@
 
 ## 三维转二维的推导
 
-![Transform3Dto2D](http://ojlsgreog.bkt.clouddn.com/Transform3Dto2D.png)
+![Transform3Dto2D](http://huihut-img.oss-cn-shenzhen.aliyuncs.com/Transform3Dto2D.png)
 
 上图可知，只要使用`Transform3Dto2D()`函数，即可方便的把三维坐标转化为二维坐标（斜二测视图）。
 
@@ -22,7 +22,7 @@
 
 在三维空间直角坐标系中，以原点为球心、半径为 `r` 的球面的方程为 `x^2 + y^2 + z^2 = r^2`，其参数方程为
 
-![SphericalParameterEquation](http://ojlsgreog.bkt.clouddn.com/SphericalParameterEquation.png)
+![SphericalParameterEquation](http://huihut-img.oss-cn-shenzhen.aliyuncs.com/SphericalParameterEquation.png)
 
 ## 新建项目
 
@@ -323,4 +323,5 @@ void CGraphicsExercise3DView::OnDraw(CDC* pDC)
 
 ## 效果图
 
-![GraphicsExercise3DCapture](http://ojlsgreog.bkt.clouddn.com/GraphicsExercise3DCapture.png)
+![GraphicsExercise3DCapture](http://huihut-img.oss-cn-shenzhen.aliyuncs.com/GraphicsExercise3DCapture.png)
+
